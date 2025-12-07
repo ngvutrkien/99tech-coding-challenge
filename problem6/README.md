@@ -22,8 +22,6 @@
     - [Client-Side Optimistic Updates](#client-side-optimistic-updates)
     - [User Profiles Optimization](#user-profiles-optimization)
 
----
-
 ## Description
 
 - This document outlines the design of a real-time leaderboard service for tracking and displaying user scores.
@@ -39,8 +37,6 @@
 flowchart TD
     A[Web client] --> B[Application Server];
     B --> C[Redis];
-    C --> D[Redis Slave];
-    C --> E[Redis Slave];
 ```
 
 ### Web Client
@@ -54,7 +50,7 @@ flowchart TD
 - Calulates user's new score and save to Redis Sorted Set.
 - Manages an SSE connection to client for broadcasting real-time leaderboards updates.
 
-**REST `POST /api/actions`**
+**[POST] `/api/actions` Endpoint**
 
 - Authentication: JWT Bearer.
 - Request Headers:
@@ -90,7 +86,7 @@ Content-Type: application/json
 }
 ```
 
-**SERVER-SENT EVENTS `GET api/events/leaderboards`**
+**[GET] `api/events/leaderboards` Server-Sent Events Connection**
 
 - Authentication: JWT Bearer in query string.
 - Example Events:
@@ -130,9 +126,8 @@ Content-Type: application/json
 ```
 
 ### Redis
+
 - Caches user' score in a **Sorted Set** which provides automatic ranking based on score values.
-- **Master-Slaves** replication to avoid single point of failure and data lost when disaster.
-- Master node handles write operations. Slave nodes handle read operations.
 
 ```bash
 # Add or update user score
@@ -152,6 +147,16 @@ ZREVRANK leaderboard "user-uuid-123"
 
 # Get total number of users
 ZCARD leaderboard
+```
+
+- **Master-Slaves** replication to avoid single point of failure and data lost when disaster.
+- Master node handles write operations. Slave nodes handle read operations.
+
+```mermaid
+flowchart TD
+    A[Redis<br>Master Node] --> B[Redis<br>Slave Node];
+
+    A --> C[Redis<br>Slave Node];
 ```
 
 - Implement multiple layers of rate limiting:
@@ -281,8 +286,6 @@ sequenceDiagram
 - **Improvement**:
   - Cache user profiles separately in Redis hash.
 
-**Optimized Redis Structure**:
 ```bash
-# Separate user profile cache
 HSET user:uuid-123 username "player123" avatar "url" level 5
 ```
