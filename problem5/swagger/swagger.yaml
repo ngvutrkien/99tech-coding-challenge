@@ -1,0 +1,187 @@
+openapi: 3.0.0
+
+info:
+  title: Resource Management API
+  description: API for managing resources with CRUD operations
+  version: 1.0.0
+
+paths:
+  /api/resources:
+    get:
+      summary: Get all resources
+      description: Retrieve a paginated list of all resources with optional filtering
+      parameters:
+        - name: archived
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter resources by archived status
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of resources to skip
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Maximum number of resources to return (max 100)
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Resource"
+                      total:
+                        type: integer
+                        description: Total number of resources matching the filter
+                      offset:
+                        type: integer
+                        description: Current offset value
+                      limit:
+                        type: integer
+                        description: Current limit value
+        "400":
+          description: Invalid input
+
+    post:
+      summary: Create a new resource
+      description: Create a new resource with the provided data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceInput"
+      responses:
+        "201":
+          description: Resource created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "400":
+          description: Invalid input
+
+  /api/resources/{id}:
+    get:
+      summary: Get a resource by ID
+      description: Retrieve a specific resource by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+          description: The resource ID
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "404":
+          description: Resource not found
+
+    put:
+      summary: Update a resource
+      description: Update an existing resource by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+          description: The resource ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceInput"
+      responses:
+        "200":
+          description: Resource updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "404":
+          description: Resource not found
+        "400":
+          description: Invalid input
+
+    delete:
+      summary: Delete a resource
+      description: Delete a specific resource by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+          description: The resource ID
+      responses:
+        "204":
+          description: Resource deleted successfully
+        "404":
+          description: Resource not found
+
+components:
+  schemas:
+    Resource:
+      type: object
+      properties:
+        id:
+          type: number
+          description: Unique identifier for the resource
+        name:
+          type: string
+          description: Name of the resource
+        description:
+          type: string
+          description: Description of the resource
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the resource was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the resource was last updated
+      required:
+        - id
+        - name
+
+    ResourceInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the resource
+          minLength: 1
+        description:
+          type: string
+          description: Description of the resource
+      required:
+        - name
